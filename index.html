@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ffe9f0">
+<title>Приглашение 💌</title>
+<style>
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;padding:24px 16px;
+    display:flex;align-items:center;justify-content:center;
+    font-family:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    color:#2b2b3a;
+    background:linear-gradient(160deg,#ffe9f0 0%,#eef1ff 55%,#f6e9ff 100%);
+    background-attachment:fixed;
+  }
+  .screen{width:100%;max-width:560px}
+  .hidden{display:none!important}
+
+  .panel,.card{
+    background:rgba(255,255,255,.82);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    border:1px solid rgba(255,255,255,.9);
+    border-radius:26px;padding:26px 22px;
+    box-shadow:0 18px 50px rgba(120,80,160,.16);
+  }
+  .card{position:relative;text-align:center}
+
+  h1{margin:0 0 6px;font-size:23px}
+  .sub{margin:0 0 20px;font-size:14px;color:#817c99;line-height:1.45}
+  .label{font-size:13px;font-weight:600;color:#7a7690;margin:0 0 6px}
+  .field{margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:480px){.grid{grid-template-columns:1fr}}
+
+  input,textarea{
+    width:100%;padding:12px 14px;border-radius:14px;border:1px solid #e6e2f0;
+    background:#fff;font:inherit;color:inherit;outline:none;transition:.15s;resize:vertical;
+  }
+  input:focus,textarea:focus{border-color:#ffb3cd;box-shadow:0 0 0 3px rgba(255,77,136,.12)}
+
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:13px 22px;border-radius:16px;border:0;font:inherit;font-weight:700;
+    cursor:pointer;text-decoration:none;transition:transform .15s,box-shadow .15s,background .15s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .btn:active{transform:scale(.97)}
+  .btn.primary{width:100%;background:linear-gradient(135deg,#8b5cf6,#ff5c8a);color:#fff;box-shadow:0 12px 28px rgba(139,92,246,.28)}
+  .btn.yes{background:linear-gradient(135deg,#ff5c8a,#ff8b5c);color:#fff;box-shadow:0 10px 24px rgba(255,92,138,.35)}
+  .btn.ghost{background:#fff;color:#5a5670;border:1px solid #e6e2f0}
+  .btn.small{padding:11px 16px;border-radius:14px}
+  .btn.no{background:#fff;color:#8a86a0;border:1.5px solid #e6e2f0}
+  .btn.no.freed{position:absolute;z-index:9;transition:left .18s ease,top .18s ease,transform .18s ease}
+  .btn[disabled]{opacity:.6;cursor:default;box-shadow:none}
+
+  .btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+  .btns .btn{flex:1;min-width:130px}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;min-height:34px;align-items:center}
+  .chip{display:inline-flex;align-items:center;gap:4px;padding:7px 8px 7px 12px;border-radius:12px;background:#f3f0fb;font-size:14px}
+  .chip button{border:0;background:transparent;cursor:pointer;color:#9a94b3;font-size:16px;line-height:1;padding:0 3px}
+  .empty{font-size:13px;color:#b0abc4}
+  .adder{display:flex;gap:8px}
+  .adder input{flex:1}
+
+  .deco{font-size:46px;line-height:1;margin-bottom:10px}
+  .deco img{max-width:100%;max-height:220px;border-radius:18px;display:inline-block}
+  .hello{margin:0 0 10px;font-size:24px}
+  .msg{margin:0 0 6px;font-size:16px;line-height:1.5;color:#4a465e}
+  .msg.small{font-size:14px;color:#817c99;margin-top:14px}
+  .sign{font-size:14px;color:#9a94b3;margin-bottom:20px}
+  .question{font-size:18px;font-weight:700;margin:22px 0 0}
+  .escaped{font-size:13px;color:#a49fbb;margin-top:14px}
+
+  .qblock{margin:0 0 18px;text-align:left}
+  .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .opt{
+    padding:11px 16px;border-radius:14px;border:1.5px solid #ece8f6;background:#fff;
+    font:inherit;cursor:pointer;transition:.15s;color:#4a465e;
+  }
+  .opt:hover{border-color:#ffc2d6}
+  .opt.sel{border-color:#ff5c8a;background:#fff0f5;color:#d62a63;font-weight:700}
+  .custom-inp{margin-top:10px;font-size:14px}
+
+  .drum-wrap{
+    position:relative;margin:0 auto;width:100%;max-width:300px;
+    background:#faf8ff;border:1px solid #ece8f6;border-radius:16px;
+    overflow:hidden;
+  }
+  .drum-wrap.small{max-width:110px;flex:0 0 auto}
+  .drum{
+    height:180px;overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-width:none;position:relative;z-index:1;
+  }
+  .drum::-webkit-scrollbar{display:none}
+  .drum-inner{padding:70px 0}
+  .drum-item{
+    height:40px;display:flex;align-items:center;justify-content:center;
+    font-size:15px;color:#a09bb8;
+    transition:color .12s;
+    padding:0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .drum-item.active{color:#d62a63;font-weight:700}
+  .drum-wrap::before,.drum-wrap::after{
+    content:'';position:absolute;left:0;right:0;height:60px;pointer-events:none;z-index:2;
+  }
+  .drum-wrap::before{top:0;background:linear-gradient(#faf8ff,rgba(250,248,255,0))}
+  .drum-wrap::after{bottom:0;background:linear-gradient(rgba(250,248,255,0),#faf8ff)}
+  .drum-hl{
+    position:absolute;left:6px;right:6px;top:50%;height:40px;margin-top:-20px;
+    border-radius:10px;border:1.5px solid #ffc2d6;
+    background:rgba(255,240,245,.35);pointer-events:none;z-index:3;
+  }
+  .drums{display:flex;align-items:center;justify-content:center;gap:8px}
+  .drums .drum-wrap{margin:0}
+  .drum-colon{font-size:22px;font-weight:700;color:#c8c2dc;user-select:none}
+  .pick-summary{font-size:13px;color:#817c99;margin:6px 0 0;text-align:center}
+
+  .summary{display:flex;flex-direction:column;gap:8px;margin:18px 0 4px}
+  .srow{display:flex;justify-content:space-between;gap:12px;padding:12px 16px;border-radius:14px;background:#f7f4fd;font-size:15px}
+  .srow span{color:#817c99}
+
+  .confetti{position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;z-index:1}
+  .confetti span{position:absolute;top:-30px;animation:fall linear forwards}
+  @keyframes fall{to{transform:translateY(620px) rotate(420deg);opacity:.15}}
+
+  .result{margin-top:18px;padding-top:18px;border-top:1px dashed #e6e2f0}
+  .result .row{display:flex;gap:8px;margin-bottom:10px}
+  .result input{font-size:13px}
+  .backbtn{display:flex;margin:16px auto 0;max-width:220px}
+
+  /* --- Красивый пульсирующий конвертик без стрелок --- */
+  .heart-envelope {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    z-index: 10;
+    transition: transform 0.2s;
+  }
+  .heart-envelope:hover { transform: scale(1.1); }
+  .heart-envelope:active { transform: scale(0.9); }
+  
+  .heart-envelope .envelope {
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 40px;
+    filter: drop-shadow(0 2px 4px rgba(255,92,138,0.3));
+    animation: pulseEnvelope 1.5s infinite ease-in-out;
+  }
+
+  /* Постоянное легкое свечение и пульсация конверта */
+  @keyframes pulseEnvelope {
+    0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,92,138,0)); }
+    50% { transform: scale(0.9); filter: drop-shadow(0 0 12px rgba(255,92,138,0.8)); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,92,138,0)); }
+  }
+</style>
+</head>
+<body>
+
+<section id="editor" class="screen hidden">
+  <div class="panel">
+    <h1>Приглашение 💌</h1>
+    <p class="sub">Собери открытку, получи ссылку и отправь. Дату и время она выберет на барабанах, место — из твоих вариантов или своим. Ответ придёт тебе в Telegram.</p>
+
+    <div class="grid">
+      <div class="field"><div class="label">Кому</div><input id="to" placeholder="Аня"></div>
+      <div class="field"><div class="label">От кого</div><input id="from" placeholder="Макс"></div>
+    </div>
+
+    <div class="field">
+      <div class="label">Сообщение</div>
+      <textarea id="msg" rows="2" placeholder="Пойдём куда-нибудь в субботу?"></textarea>
+    </div>
+
+    <div class="grid">
+      <div class="field"><div class="label">Картинка (ссылка)</div><input id="photo" placeholder="https://…"></div>
+      <div class="field"><div class="label">Эмодзи</div><input id="emoji" maxlength="8" placeholder="💌"></div>
+    </div>
+
+    <div id="lists"></div>
+
+    <div class="btns">
+      <button class="btn ghost" id="previewBtn">Предпросмотр</button>
+      <button class="btn primary" id="makeBtn">Создать ссылку</button>
+    </div>
+
+    <div id="result" class="result hidden">
+      <div class="label">Ссылка готова 💌</div>
+      <div class="row">
+        <input id="linkOut" readonly>
+        <button class="btn ghost small" id="copyLink" title="Скопировать">⧉</button>
+      </div>
+      <div class="btns" style="margin-top:6px">
+        <a class="btn ghost small" id="tgShare" target="_blank" rel="noopener">Telegram</a>
+        <a class="btn ghost small" id="waShare" target="_blank" rel="noopener">WhatsApp</a>
+        <a class="btn ghost small" id="openPreview" target="_blank" rel="noopener">Открыть</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="viewer" class="screen hidden">
+  <div id="viewerHost"></div>
+</section>
+
+<script>
+/* ==========================================================
+   URL твоего Cloudflare Worker-прокси.
+   ========================================================== */
+const PROXY_URL = 'https://tg-proxy.dima-kuzmenko543.workers.dev'; 
+
+/* ---------------- утилиты ---------------- */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function b64urlEncode(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function b64urlDecode(s){
+  s = s.replace(/-/g,'+').replace(/_/g,'/');
+  while (s.length % 4) s += '=';
+  const bin = atob(s);
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+async function copyText(t){
+  try { await navigator.clipboard.writeText(t); return true; }
+  catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = t; document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch(_) {}
+    ta.remove(); return ok;
+  }
+}
+function showScreen(name){
+  $('editor').classList.toggle('hidden', name !== 'editor');
+  $('viewer').classList.toggle('hidden', name !== 'viewer');
+  window.scrollTo({ top: 0 });
+}
+function proxyConfigured(){
+  return PROXY_URL && !PROXY_URL.includes('xxxx') && /^https?:\/\//.test(PROXY_URL);
+}
+
+/* ---------------- редактор ---------------- */
+const lists = {
+  places: ['Кофе ☕','Кино 🎬','Прогулка 🌳']
+};
+const LIST_DEFS = [
+  { key:'places', title:'Куда можно пойти (она выберет или предложит своё)', ph:'Например: Кофе ☕' }
+];
+
+function buildLists(){
+  $('lists').innerHTML = LIST_DEFS.map(d => `
+    <div class="field">
+      <div class="label">${d.title}</div>
+      <div class="chips" data-chips="${d.key}"></div>
+      <div class="adder">
+        <input data-input="${d.key}" placeholder="${d.ph}">
+        <button type="button" class="btn ghost small" data-add="${d.key}">+</button>
+      </div>
+    </div>`).join('');
+  LIST_DEFS.forEach(d => renderChips(d.key));
+}
+function renderChips(key){
+  const box = document.querySelector(`[data-chips="${key}"]`);
+  if (!box) return;
+  box.innerHTML = lists[key].length
+    ? lists[key].map((v,i) => `<span class="chip">${esc(v)}<button type="button" data-del="${key}" data-i="${i}" aria-label="удалить">×</button></span>`).join('')
+    : `<span class="empty">пока пусто</span>`;
+}
+function addValue(key){
+  const inp = document.querySelector(`[data-input="${key}"]`);
+  const v = inp.value.trim();
+  if (!v) return;
+  if (!lists[key].includes(v)) lists[key].push(v);
+  inp.value = '';
+  renderChips(key);
+  inp.focus();
+}
+$('lists').addEventListener('click', (e) => {
+  const add = e.target.closest('[data-add]');
+  if (add) { addValue(add.dataset.add); return; }
+  const del = e.target.closest('[data-del]');
+  if (del) { lists[del.dataset.del].splice(+del.dataset.i, 1); renderChips(del.dataset.del); }
+});
+$('lists').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.matches('[data-input]')) {
+    e.preventDefault();
+    addValue(e.target.dataset.input);
+  }
+});
+
+function buildData(){
+  return {
+    to:      $('to').value.trim(),
+    from:    $('from').value.trim(),
+    msg:     $('msg').value.trim(),
+    photo:   $('photo').value.trim(),
+    emoji:   $('emoji').value.trim(),
+    places:  lists.places.slice()
+  };
+}
+function makeLink(){
+  const data = buildData();
+  return location.origin + location.pathname + location.search +
+         '#d=' + b64urlEncode(JSON.stringify(data));
+}
+$('makeBtn').addEventListener('click', () => {
+  const link = makeLink();
+  $('result').classList.remove('hidden');
+  $('linkOut').value = link;
+  $('tgShare').href = 'https://t.me/share/url?url=' + encodeURIComponent(link) +
+                      '&text=' + encodeURIComponent('У меня для тебя кое-что 💌');
+  $('waShare').href = 'https://wa.me/?text=' + encodeURIComponent('У меня для тебя кое-что 💌 ' + link);
+  $('openPreview').href = link;
+  $('result').scrollIntoView({ behavior:'smooth', block:'nearest' });
+});
+$('copyLink').addEventListener('click', async () => {
+  const ok = await copyText($('linkOut').value);
+  $('copyLink').textContent = ok ? '✓' : '!';
+  setTimeout(() => $('copyLink').textContent = '⧉', 1500);
+});
+$('previewBtn').addEventListener('click', () => showViewer(buildData(), true));
+
+/* ---------------- просмотр приглашения ---------------- */
+let vData = null, vPreview = false, vStage = 'ask', vPicked = {}, noCount = 0;
+let vDays = null, vDateIdx = 1, vHourIdx = 19, vMinIdx = 0;
+let attentionTimer = null;
+
+const NO_TEXTS = ['Нет 🙈','Точно нет?','Уверена?','Подумай ещё','Ну пожалуйста','Не убежишь 😏','Я старался 🥺','Кнопка сломалась'];
+const MONTHS   = ['янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'];
+const WEEKDAYS = ['вс','пн','вт','ср','чт','пт','сб'];
+const HOURS    = Array.from({length:24}, (_,i)=>String(i).padStart(2,'0'));
+const MINUTES  = Array.from({length:12}, (_,i)=>String(i*5).padStart(2,'0'));
+
+function computeDays(){
+  const out = [];
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (let i=0;i<60;i++){
+    const d = new Date(today); d.setDate(d.getDate()+i);
+    let prefix;
+    if (i===0) prefix = 'Сегодня, ';
+    else if (i===1) prefix = 'Завтра, ';
+    else if (i===2) prefix = 'Послезавтра, ';
+    else prefix = WEEKDAYS[d.getDay()] + ', ';
+    out.push(prefix + d.getDate() + ' ' + MONTHS[d.getMonth()]);
+  }
+  return out;
+}
+function showViewer(data, isPreview){
+  vData = data; vPreview = !!isPreview;
+  vStage = 'ask'; vPicked = {}; noCount = 0;
+  vDays = null;
+  vDateIdx = 1; vHourIdx = 19; vMinIdx = 0;
+  if (attentionTimer) clearInterval(attentionTimer);
+  document.title = 'Для тебя 💌';
+  showScreen('viewer');
+  drawViewer();
+}
+function decoHTML(){
+  if (vData.photo) {
+    return `<div class="deco"><img src="${esc(vData.photo)}" alt="" onerror="this.style.display='none'"></div>`;
+  }
+  return `<div class="deco">${esc(vData.emoji || '💌')}</div>`;
+}
+function askHTML(){
+  return `
+  <div class="card" id="card">
+    ${decoHTML()}
+    <h2 class="hello">Привет${vData.to ? ', ' + esc(vData.to) : ''}! 👋</h2>
+    ${vData.msg ? `<p class="msg">${esc(vData.msg)}</p>` : ''}
+    ${vData.from ? `<div class="sign">— ${esc(vData.from)}</div>` : ''}
+    <div class="question">Пойдёшь со мной?</div>
+    <div class="btns">
+      <button class="btn yes" id="yesBtn">Да 💚</button>
+      <button class="btn no" id="noBtn">Нет 🙈</button>
+    </div>
+    <div class="escaped hidden" id="escaped">кнопка «нет» сбежала 🙈</div>
+  </div>`;
+}
+function pickHTML(){
+  const places = vData.places || [];
+  const days = vDays || [];
+  const dateItems = days.map((label,i)=>`<div class="drum-item" data-i="${i}">${esc(label)}</div>`).join('');
+  const hourItems = HOURS.map((h,i)=>`<div class="drum-item" data-i="${i}">${h}</div>`).join('');
+  const minItems  = MINUTES.map((m,i)=>`<div class="drum-item" data-i="${i}">${m}</div>`).join('');
+
+  return `
+  <div class="card" id="card">
+    <div class="deco">💚</div>
+    <h2 class="hello">Ура! 🎉</h2>
+    <p class="msg">Крути барабаны, выбери дату и время — а место можно взять из вариантов или предложить своё:</p>
+
+    <div class="qblock">
+      <div class="label">Дата</div>
+      <div class="drum-wrap">
+        <div class="drum" data-drum="date"><div class="drum-inner">${dateItems}</div></div>
+        <div class="drum-hl"></div>
+      </div>
+    </div>
+
+    <div class="qblock">
+      <div class="label">Время</div>
+      <div class="drums">
+        <div class="drum-wrap small">
+          <div class="drum" data-drum="hour"><div class="drum-inner">${hourItems}</div></div>
+          <div class="drum-hl"></div>
+        </div>
+        <div class="drum-colon">:</div>
+        <div class="drum-wrap small">
+          <div class="drum" data-drum="minute"><div class="drum-inner">${minItems}</div></div>
+          <div class="drum-hl"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="qblock">
+      <div class="label">Куда идём</div>
+      ${places.length ? `<div class="opts">
+        ${places.map(v => `<button class="opt${vPicked.places === v ? ' sel' : ''}"
+            data-key="places" data-val="${esc(v)}">${esc(v)}</button>`).join('')}
+      </div>` : ''}
+      <input class="custom-inp" data-custom="places" placeholder="…или предложи своё место">
+    </div>
+
+    <div class="pick-summary" id="pickSummary"></div>
+
+    <div class="btns">
+      <button class="btn yes" id="doneBtn">Готово 💚</button>
+    </div>
+  </div>`;
+}
+function answerText(){
+  const p = [];
+  if (vPicked.dates)  p.push('дата — ' + vPicked.dates);
+  if (vPicked.times)  p.push('время — ' + vPicked.times);
+  if (vPicked.places) p.push('место — ' + vPicked.places);
+  const hi = vData.from ? 'Привет, ' + vData.from + '! ' : 'Привет! ';
+  return hi + 'Я — да 💚' + (p.length ? ' ' + p.join(', ') + '.' : '');
+}
+function doneHTML(){
+  const parts = [];
+  if (vPicked.dates)  parts.push(['Дата', vPicked.dates]);
+  if (vPicked.times)  parts.push(['Время', vPicked.times]);
+  if (vPicked.places) parts.push(['Место', vPicked.places]);
+  const canSend = proxyConfigured();
+  
+  return `
+  <div class="card" id="card">
+    <div class="confetti" id="confetti"></div>
+    
+    <div class="heart-envelope" id="heartEnvelopeBtn" title="Нажми на меня ✨">
+      <span class="envelope">💌</span>
+    </div>
+
+    <div class="deco">🎉</div>
+    <h2 class="hello">Договорились!</h2>
+    ${parts.length
+      ? `<div class="summary">${parts.map(([k,v]) => `<div class="srow"><span>${k}</span><b>${esc(v)}</b></div>`).join('')}</div>`
+      : `<p class="msg">Жду с нетерпением 💚</p>`}
+    <p class="msg small">${canSend
+      ? 'Нажми «Отправить ответ» — он сразу улетит 💌'
+      : 'Прокси не настроен. Ответ не будет отправлен 😕'}</p>
+    <div class="btns">
+      ${canSend ? `<button class="btn yes" id="sendBtn">Отправить ответ</button>` : ''}
+    </div>
+    <div id="sendStatus" class="msg small" style="min-height:20px"></div>
+  </div>`;
+}
+function updateSummary(){
+  const el = $('pickSummary');
+  if (!el) return;
+  el.textContent = `Выбрано: ${vPicked.dates || '—'} · ${vPicked.times || '—'}`;
+}
+function updatePickUI(){
+  const host = $('viewerHost');
+  host.querySelectorAll('.opt[data-val]').forEach(b => {
+    b.classList.toggle('sel', vPicked[b.dataset.key] === b.dataset.val);
+  });
+}
+
+async function sendAnswer(text){
+  try {
+    const r = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    const data = await r.json().catch(() => ({ ok: false }));
+    return data.ok === true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function bindDrum(el, onPick, startIdx){
+  if (!el) return;
+  const IH = 40;
+  const items = el.querySelectorAll('.drum-item');
+  const maxIdx = items.length - 1;
+  let raf = 0, snapTimer = 0, acc = 0, lastIdx = -1;
+  let targetIdx = startIdx;
+
+  const clamp = (i) => Math.max(0, Math.min(maxIdx, i));
+  const readIdx = () => clamp(Math.round(el.scrollTop / IH));
+
+  function apply(){
+    raf = 0;
+    const idx = readIdx();
+    items.forEach((it,i)=>it.classList.toggle('active', i === idx));
+    if (idx !== lastIdx){ lastIdx = idx; onPick(idx); }
+  }
+  function scheduleApply(){ if (!raf) raf = requestAnimationFrame(apply); }
+
+  function snapToNearest(){
+    const idx = readIdx();
+    targetIdx = idx;
+    if (Math.abs(el.scrollTop - idx * IH) < 0.5) return;
+    el.scrollTo({ top: idx * IH, behavior: 'smooth' });
+  }
+
+  el.addEventListener('scroll', () => {
+    scheduleApply();
+    clearTimeout(snapTimer);
+    snapTimer = setTimeout(snapToNearest, 140);
+  }, { passive: true });
+
+  el.addEventListener('wheel', (e) => {
+    if (!e.deltaY) return;
+    const dir = e.deltaY > 0 ? 1 : -1;
+    const next = targetIdx + dir;
+    if (next < 0 || next > maxIdx) return;
+    e.preventDefault();
+
+    const d = e.deltaMode === 1 ? e.deltaY * 40
+            : e.deltaMode === 2 ? e.deltaY * 180
+            : e.deltaY;
+    acc += d;
+    if (Math.abs(acc) < 40) return;
+    acc = 0;
+
+    targetIdx = clamp(next);
+    el.scrollTo({ top: targetIdx * IH, behavior: 'smooth' });
+  }, { passive: false });
+
+  el.scrollTop = startIdx * IH;
+  apply();
+}
+
+function setupDrums(){
+  const host = $('viewerHost');
+  bindDrum(host.querySelector('[data-drum="date"]'), (i) => {
+    vDateIdx = i;
+    vPicked.dates = vDays[i];
+    updateSummary();
+  }, vDateIdx);
+
+  bindDrum(host.querySelector('[data-drum="hour"]'), (i) => {
+    vHourIdx = i;
+    vPicked.times = HOURS[vHourIdx] + ':' + MINUTES[vMinIdx];
+    updateSummary();
+  }, vHourIdx);
+
+  bindDrum(host.querySelector('[data-drum="minute"]'), (i) => {
+    vMinIdx = i;
+    vPicked.times = HOURS[vHourIdx] + ':' + MINUTES[vMinIdx];
+    updateSummary();
+  }, vMinIdx);
+}
+
+function spawnConfetti(){
+  const box = $('confetti');
+  if (!box) return;
+  const chars = ['💚','💌','🎉','✨','💖','🎈', '❤️', '💕', '⭐️'];
+  
+  for (let i = 0; i < 30; i++){
+    const s = document.createElement('span');
+    s.textContent = chars[Math.floor(Math.random() * chars.length)];
+    s.style.left = Math.random() * 100 + '%';
+    s.style.fontSize = (14 + Math.random() * 16) + 'px';
+    s.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+    s.style.animationDelay = (Math.random() * 0.3) + 's';
+    s.addEventListener('animationend', () => s.remove());
+    box.appendChild(s);
+  }
+}
+
+function drawViewer(){
+  const host = $('viewerHost');
+  if (vStage === 'pick' && !vDays) vDays = computeDays();
+
+  if (attentionTimer) clearInterval(attentionTimer);
+
+  host.innerHTML = vStage === 'ask' ? askHTML() : vStage === 'pick' ? pickHTML() : doneHTML();
+
+  if (vStage === 'ask'){
+    const noBtn = $('noBtn');
+    $('yesBtn').addEventListener('click', () => {
+      vStage = 'pick';
+      drawViewer();
+    });
+    noBtn.addEventListener('mouseenter', evade);
+    noBtn.addEventListener('touchstart', evade, { passive:false });
+    noBtn.addEventListener('click', evade);
+  }
+
+  if (vStage === 'pick'){
+    setupDrums();
+
+    host.querySelectorAll('.opt[data-val]').forEach(b => b.addEventListener('click', () => {
+      const key = b.dataset.key;
+      vPicked[key] = b.dataset.val;
+      const inp = host.querySelector(`[data-custom="${key}"]`);
+      if (inp) inp.value = '';
+      updatePickUI();
+    }));
+
+    host.querySelectorAll('[data-custom]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const key = inp.dataset.custom;
+        const v = inp.value.trim();
+        if (v) vPicked[key] = v;
+        else delete vPicked[key];
+        updatePickUI();
+      });
+    });
+
+    $('doneBtn').addEventListener('click', () => {
+      vStage = 'done';
+      drawViewer();
+    });
+  }
+
+  if (vStage === 'done'){
+    spawnConfetti();
+
+    const envBtn = $('heartEnvelopeBtn');
+    if (envBtn) {
+      envBtn.addEventListener('click', () => {
+        spawnConfetti();
+        envBtn.style.transform = 'scale(0.9)';
+        setTimeout(() => envBtn.style.transform = '', 150);
+      });
+
+      // Автоматическое привлечение внимания каждые 3 секунды
+      attentionTimer = setInterval(() => {
+        const btn = $('heartEnvelopeBtn');
+        if (!btn) { clearInterval(attentionTimer); return; }
+        
+        // Легкий прыжок
+        btn.style.transform = 'scale(0.85)';
+        setTimeout(() => btn.style.transform = '', 150);
+
+        // Вылетает несколько сердечек прямо над конвертом
+        const box = $('confetti');
+        if (box) {
+          const chars = ['💖','💌','✨','💕'];
+          for(let i=0; i<5; i++){
+             const s = document.createElement('span');
+             s.textContent = chars[Math.floor(Math.random() * chars.length)];
+             s.style.left = (70 + Math.random() * 25) + '%'; // Летят из правого верхнего угла
+             s.style.top = '-10px';
+             s.style.fontSize = (14 + Math.random() * 10) + 'px';
+             s.style.animationDuration = (1.2 + Math.random() * 1.5) + 's';
+             s.addEventListener('animationend', () => s.remove());
+             box.appendChild(s);
+          }
+        }
+      }, 3000);
+    }
+
+    const sendBtn = $('sendBtn');
+    if (sendBtn) {
+      sendBtn.addEventListener('click', async () => {
+        if (sendBtn.disabled) return;
+        sendBtn.disabled = true;
+        sendBtn.textContent = 'Отправляю…';
+        const status = $('sendStatus');
+        const ok = await sendAnswer(answerText());
+        if (ok){
+          sendBtn.textContent = 'Отправлено ✓';
+          sendBtn.classList.remove('yes');
+          sendBtn.classList.add('ghost');
+          if (status) status.textContent = 'Ответ улетел 💌';
+        } else {
+          sendBtn.disabled = false;
+          sendBtn.textContent = 'Отправить ещё раз';
+          if (status) status.textContent = 'Не получилось 😕 Попробуй ещё.';
+        }
+      });
+    }
+  }
+
+  if (vPreview){
+    const back = document.createElement('button');
+    back.className = 'btn ghost backbtn';
+    back.textContent = '← к редактору';
+    back.addEventListener('click', () => {
+      document.title = 'Приглашение 💌';
+      if (attentionTimer) clearInterval(attentionTimer);
+      showScreen('editor');
+    });
+    host.appendChild(back);
+  }
+}
+
+function evade(e){
+  if (e && e.cancelable) e.preventDefault();
+  const card = $('card'), btn = $('noBtn');
+  if (!card || !btn) return;
+
+  noCount++;
+  if (noCount > 8){
+    btn.style.display = 'none';
+    $('escaped')?.classList.remove('hidden');
+    return;
+  }
+
+  const c = card.getBoundingClientRect();
+  const b = btn.getBoundingClientRect();
+  const yes = $('yesBtn');
+
+  if (!btn.classList.contains('freed')){
+    btn.classList.add('freed');
+    btn.style.left = (b.left - c.left) + 'px';
+    btn.style.top  = (b.top  - c.top ) + 'px';
+    btn.style.width = b.width + 'px';
+  }
+
+  const pad = 10;
+  const bw = btn.offsetWidth, bh = btn.offsetHeight;
+  const maxL = Math.max(pad, c.width  - bw - pad);
+  const maxT = Math.max(pad, c.height - bh - pad);
+  const y = yes ? yes.getBoundingClientRect() : null;
+
+  let left = pad, top = pad;
+  for (let i = 0; i < 30; i++){
+    left = pad + Math.random() * (maxL - pad);
+    top  = pad + Math.random() * (maxT - pad);
+    if (!y) break;
+    const nl = c.left + left, nt = c.top + top;
+    const overlap = !(nl + bw < y.left - 8 || nl > y.right + 8 || nt + bh < y.top - 8 || nt > y.bottom + 8);
+    if (!overlap) break;
+  }
+
+  btn.style.left = left + 'px';
+  btn.style.top  = top  + 'px';
+  btn.style.transform = `scale(${Math.max(0.62, 1 - noCount * 0.05)}) rotate(${(Math.random() * 30 - 15).toFixed(0)}deg)`;
+  btn.textContent = NO_TEXTS[Math.min(noCount, NO_TEXTS.length - 1)];
+}
+
+(function boot(){
+  buildLists();
+  const m = location.hash.match(/^#d=(.+)$/);
+  if (m){
+    try {
+      showViewer(JSON.parse(b64urlDecode(m[1])), false);
+      return;
+    } catch (err) {}
+  }
+  showScreen('editor');
+})();
+</script>
+</body>
+</html>
