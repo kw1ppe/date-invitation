@@ -132,6 +132,19 @@
   .result input{font-size:13px}
   .backbtn{display:flex;margin:16px auto 0;max-width:220px}
 
+  /* Блок настроек Telegram */
+  .tg-settings {
+    background: #f7f4fd;
+    border: 1px solid #ece8f6;
+    padding: 14px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+  }
+  .tg-settings .label { color: #d62a63; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .tg-settings .hint { font-size: 12px; color: #817c99; margin-top: -6px; margin-bottom: 12px; display: block; }
+  .tg-settings .hint a { color: #8b5cf6; text-decoration: none; }
+  .tg-settings .hint a:hover { text-decoration: underline; }
+
   /* --- Красивый пульсирующий конвертик без стрелок --- */
   .heart-envelope {
     position: absolute;
@@ -155,7 +168,6 @@
     animation: pulseEnvelope 1.5s infinite ease-in-out;
   }
 
-  /* Постоянное легкое свечение и пульсация конверта */
   @keyframes pulseEnvelope {
     0% { transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,92,138,0)); }
     50% { transform: scale(0.9); filter: drop-shadow(0 0 12px rgba(255,92,138,0.8)); }
@@ -168,7 +180,7 @@
 <section id="editor" class="screen hidden">
   <div class="panel">
     <h1>Приглашение 💌</h1>
-    <p class="sub">Собери открытку, получи ссылку и отправь. Дату и время она выберет на барабанах, место — из твоих вариантов или своим. Ответ придёт тебе в Telegram.</p>
+    <p class="sub">Собери открытку и отправь ссылку. Дату, время и место она выберет сама. Ответ придёт тебе в Telegram.</p>
 
     <div class="grid">
       <div class="field"><div class="label">Кому</div><input id="to" placeholder="Аня"></div>
@@ -183,6 +195,17 @@
     <div class="grid">
       <div class="field"><div class="label">Картинка (ссылка)</div><input id="photo" placeholder="https://…"></div>
       <div class="field"><div class="label">Эмодзи</div><input id="emoji" maxlength="8" placeholder="💌"></div>
+    </div>
+
+    <!-- НОВЫЙ БЛОК НАСТРОЕК TELEGRAM -->
+    <div class="tg-settings">
+      <div class="label">🤖 Настройки Telegram (куда придет ответ)</div>
+      <div class="hint">
+        Создай бота у <a href="https://t.me/BotFather" target="_blank">@BotFather</a>, 
+        а свой ID узнай у <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a>.
+      </div>
+      <div class="field"><input id="tgToken" placeholder="Токен бота (например: 7123456789:AAH...)"></div>
+      <div class="field" style="margin-bottom:0"><input id="tgChatId" placeholder="Твой Chat ID (например: 123456789)"></div>
     </div>
 
     <div id="lists"></div>
@@ -213,9 +236,11 @@
 
 <script>
 /* ==========================================================
-   URL твоего Cloudflare Worker-прокси.
+   Если у тебя уже настроен Cloudflare Worker, вставь его URL.
+   Если оставить пустым, сайт будет отправлять ответы напрямую
+   через токен, который пользователь ввел в редакторе.
    ========================================================== */
-const PROXY_URL = 'https://tg-proxy.dima-kuzmenko543.workers.dev'; 
+const PROXY_URL = ''; 
 
 /* ---------------- утилиты ---------------- */
 const $ = (id) => document.getElementById(id);
@@ -249,8 +274,11 @@ function showScreen(name){
   $('viewer').classList.toggle('hidden', name !== 'viewer');
   window.scrollTo({ top: 0 });
 }
-function proxyConfigured(){
-  return PROXY_URL && !PROXY_URL.includes('xxxx') && /^https?:\/\//.test(PROXY_URL);
+
+// Проверяем, настроена ли отправка (через прокси ИЛИ через токен в ссылке)
+function tgConfigured(data){
+  if (PROXY_URL && PROXY_URL.includes('http')) return true;
+  return data && data.tgToken && data.tgChatId;
 }
 
 /* ---------------- редактор ---------------- */
@@ -303,13 +331,22 @@ $('lists').addEventListener('keydown', (e) => {
 });
 
 function buildData(){
+  const tgToken = $('tgToken').value.trim();
+  const tgChatId = $('tgChatId').value.trim();
+  
+  // Сохраняем в локальное хранилище, чтобы не вводить каждый раз
+  localStorage.setItem('my_tg_token', tgToken);
+  localStorage.setItem('my_tg_id', tgChatId);
+
   return {
     to:      $('to').value.trim(),
     from:    $('from').value.trim(),
     msg:     $('msg').value.trim(),
     photo:   $('photo').value.trim(),
     emoji:   $('emoji').value.trim(),
-    places:  lists.places.slice()
+    places:  lists.places.slice(),
+    tgToken: tgToken,
+    tgChatId: tgChatId
   };
 }
 function makeLink(){
@@ -318,6 +355,12 @@ function makeLink(){
          '#d=' + b64urlEncode(JSON.stringify(data));
 }
 $('makeBtn').addEventListener('click', () => {
+  const data = buildData();
+  if (!tgConfigured(data)) {
+    alert('Пожалуйста, заполни Токен бота и Chat ID, иначе ответ не придет!');
+    return;
+  }
+
   const link = makeLink();
   $('result').classList.remove('hidden');
   $('linkOut').value = link;
@@ -332,7 +375,14 @@ $('copyLink').addEventListener('click', async () => {
   $('copyLink').textContent = ok ? '✓' : '!';
   setTimeout(() => $('copyLink').textContent = '⧉', 1500);
 });
-$('previewBtn').addEventListener('click', () => showViewer(buildData(), true));
+$('previewBtn').addEventListener('click', () => {
+  const data = buildData();
+  if (!tgConfigured(data)) {
+    alert('Для теста заполни Токен и Chat ID в настройках Telegram.');
+    return;
+  }
+  showViewer(data, true);
+});
 
 /* ---------------- просмотр приглашения ---------------- */
 let vData = null, vPreview = false, vStage = 'ask', vPicked = {}, noCount = 0;
@@ -455,7 +505,7 @@ function doneHTML(){
   if (vPicked.dates)  parts.push(['Дата', vPicked.dates]);
   if (vPicked.times)  parts.push(['Время', vPicked.times]);
   if (vPicked.places) parts.push(['Место', vPicked.places]);
-  const canSend = proxyConfigured();
+  const canSend = tgConfigured(vData);
   
   return `
   <div class="card" id="card">
@@ -472,7 +522,7 @@ function doneHTML(){
       : `<p class="msg">Жду с нетерпением 💚</p>`}
     <p class="msg small">${canSend
       ? 'Нажми «Отправить ответ» — он сразу улетит 💌'
-      : 'Прокси не настроен. Ответ не будет отправлен 😕'}</p>
+      : 'Ошибка: автор приглашения не настроил бота 😕'}</p>
     <div class="btns">
       ${canSend ? `<button class="btn yes" id="sendBtn">Отправить ответ</button>` : ''}
     </div>
@@ -492,17 +542,37 @@ function updatePickUI(){
 }
 
 async function sendAnswer(text){
-  try {
-    const r = await fetch(PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text })
-    });
-    const data = await r.json().catch(() => ({ ok: false }));
-    return data.ok === true;
-  } catch (e) {
-    return false;
+  // Если настроен Cloudflare Worker, используем его
+  if (PROXY_URL && PROXY_URL.includes('http')) {
+    try {
+      const r = await fetch(PROXY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text })
+      });
+      const data = await r.json().catch(() => ({ ok: false }));
+      return data.ok === true;
+    } catch (e) {
+      return false;
+    }
   }
+
+  // Иначе отправляем напрямую через токен из ссылки
+  if (vData.tgToken && vData.tgChatId) {
+    try {
+      await fetch(`https://api.telegram.org/bot${vData.tgToken}/sendMessage`, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ chat_id: vData.tgChatId, text: text })
+      });
+      return true; // При no-cors ответ прочитать нельзя, поэтому считаем, что успех
+    } catch (e) {
+      return false;
+    }
+  }
+
+  return false;
 }
 
 function bindDrum(el, onPick, startIdx){
@@ -654,23 +724,20 @@ function drawViewer(){
         setTimeout(() => envBtn.style.transform = '', 150);
       });
 
-      // Автоматическое привлечение внимания каждые 3 секунды
       attentionTimer = setInterval(() => {
         const btn = $('heartEnvelopeBtn');
         if (!btn) { clearInterval(attentionTimer); return; }
         
-        // Легкий прыжок
         btn.style.transform = 'scale(0.85)';
         setTimeout(() => btn.style.transform = '', 150);
 
-        // Вылетает несколько сердечек прямо над конвертом
         const box = $('confetti');
         if (box) {
           const chars = ['💖','💌','✨','💕'];
           for(let i=0; i<5; i++){
              const s = document.createElement('span');
              s.textContent = chars[Math.floor(Math.random() * chars.length)];
-             s.style.left = (70 + Math.random() * 25) + '%'; // Летят из правого верхнего угла
+             s.style.left = (70 + Math.random() * 25) + '%';
              s.style.top = '-10px';
              s.style.fontSize = (14 + Math.random() * 10) + 'px';
              s.style.animationDuration = (1.2 + Math.random() * 1.5) + 's';
@@ -763,6 +830,11 @@ function evade(e){
 
 (function boot(){
   buildLists();
+  
+  // Восстанавливаем сохраненные данные
+  if (localStorage.getItem('my_tg_token')) $('tgToken').value = localStorage.getItem('my_tg_token');
+  if (localStorage.getItem('my_tg_id')) $('tgChatId').value = localStorage.getItem('my_tg_id');
+
   const m = location.hash.match(/^#d=(.+)$/);
   if (m){
     try {
